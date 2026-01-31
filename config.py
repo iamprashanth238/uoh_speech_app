@@ -35,10 +35,15 @@ class Config:
     
     
     # Upload Directories (Required for main_routes.py)
-    UPLOAD_AUDIO_DIR = "uploads/audio"
-    UPLOAD_TRANSCRIPTION_DIR = "uploads/transcription"
-    TRIBAL_AUDIO_DIR = "uploads/tribe-audio"
-    TRIBAL_TRANSCRIPTION_DIR = "uploads/tribe-transcription"
+    # Upload Directories (Required for main_routes.py)
+    # Using temp directory to allow writes on Serverless (Vercel) /tmp
+    import tempfile
+    BASE_UPLOAD_DIR = os.path.join(tempfile.gettempdir(), 'uoh_speech_uploads')
+    
+    UPLOAD_AUDIO_DIR = os.path.join(BASE_UPLOAD_DIR, "audio")
+    UPLOAD_TRANSCRIPTION_DIR = os.path.join(BASE_UPLOAD_DIR, "transcription")
+    TRIBAL_AUDIO_DIR = os.path.join(BASE_UPLOAD_DIR, "tribe-audio")
+    TRIBAL_TRANSCRIPTION_DIR = os.path.join(BASE_UPLOAD_DIR, "tribe-transcription")
     
     # Restoring missing configs to prevent system crash (AttributeErrors)
     S3_PROMPTS_STANDARD_INPROGRESS = "prompts/standard/inprogress/"
