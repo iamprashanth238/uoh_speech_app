@@ -8,9 +8,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <!-- Favicon icon -->
-  <link rel="icon" type="image/x-icon" href="/static/images/logo1.png">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/logo1.png') }}">
   <title>University of Hyderabad – Academic Research Portal</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
@@ -19,7 +19,8 @@
   <header class="header">
     <div class="header-box">
       <a href="/">
-        <img src="/static/images/uoh-logo-horizontal.png" alt="University of Hyderabad Logo" class="logo">
+        <img src="{{ url_for('static', filename='images/uoh-logo-horizontal.png') }}" alt="University of Hyderabad Logo"
+          class="logo">
       </a>
       <div class="title-section">
         <div class="uoh-thin">University of Hyderabad</div>
@@ -27,7 +28,8 @@
         <div class="uoh-thick">Data Collection Tool</div>
       </div>
       <a href="/">
-        <img src="/static/images/scis-logo.png" alt="University of Hyderabad Logo" class="logo">
+        <img src="{{ url_for('static', filename='images/scis-logo.png') }}" alt="University of Hyderabad Logo"
+          class="logo">
       </a>
     </div>
 
@@ -126,7 +128,7 @@
       Kattoju</a>
   </footer>
 
-  <script src="/static/app.js"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 
 </html>
