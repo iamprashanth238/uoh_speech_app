@@ -26,13 +26,40 @@
 
     .dashboard,
     .metadata-page {
-        padding: var(--space-lg) var(--space-md);
+        padding: var(--space-md);
     }
 
-    .login-form {
-        margin: 50px auto;
-        padding: var(--space-lg);
-        max-width: 90%;
+    .dashboard-header,
+    .page-header {
+        flex-direction: column;
+        gap: var(--space-md);
+        align-items: flex-start;
+    }
+
+    .header-actions {
+        width: 100%;
+        display: flex;
+        gap: var(--space-sm);
+    }
+
+    .stat-number {
+        font-size: 32px;
+    }
+
+    /* Force single column for stats on tablets/mobile to avoid squishing */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-lg);
+    }
+
+    .add-prompt-section,
+    .metadata-link-section {
+        height: auto;
+        /* Let content dictate height */
     }
 }
 
@@ -43,124 +70,99 @@
         padding: var(--space-md) var(--space-sm);
     }
 
-    .login-form {
-        margin: 30px auto;
-        padding: var(--space-lg) var(--space-md);
-        max-width: 95%;
-    }
-}
-
-/* ===== Headers ===== */
-.dashboard-header,
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-xl);
-    padding-bottom: var(--space-md);
-    border-bottom: 1px solid var(--border);
-}
-
-.dashboard-title,
-.page-title {
-    font-family: var(--font-tech);
-    font-size: 24px;
-    letter-spacing: -0.02em;
-    color: var(--fg);
-}
-
-.login-form h2 {
-    text-align: center;
-    margin-bottom: var(--space-lg);
-    font-family: var(--font-tech);
-    font-size: 24px;
-    color: var(--fg);
-}
-
-@media (max-width: 480px) {
-
-    .dashboard-header,
-    .page-header {
-        flex-direction: column;
-        gap: var(--space-md);
-        text-align: center;
-        margin-bottom: var(--space-lg);
-    }
-
-    .dashboard-title,
-    .page-title,
-    .login-form h2 {
-        font-size: 20px;
-    }
-
-    .login-form h2 {
-        margin-bottom: var(--space-md);
-    }
-
-    .header-actions {
-        flex-direction: column;
-        gap: var(--space-sm);
-        width: 100%;
-    }
-}
-
-/* ===== Stats Grid ===== */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: var(--space-md);
-    margin-bottom: var(--space-xl);
-}
-
-.stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: var(--space-lg);
-    text-align: center;
-    box-shadow: var(--shadow-sm);
-    transition: transform var(--transition-fast);
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-
-.stat-number {
-    font-size: 42px;
-    font-family: var(--font-tech);
-    font-weight: 700;
-    margin-bottom: var(--space-sm);
-    color: var(--fg);
-}
-
-.stat-label {
-    font-family: var(--font-tech);
-    letter-spacing: 0.05em;
-    color: var(--muted);
-    text-transform: uppercase;
-    font-size: 11px;
-}
-
-@media (max-width: 768px) {
-    .stat-number {
-        font-size: 36px;
-    }
-}
-
-@media (max-width: 480px) {
     .stats-grid {
         grid-template-columns: 1fr;
-        gap: var(--space-sm);
+        /* Stack vertically on phones */
     }
 
     .stat-card {
         padding: var(--space-md);
+        display: flex;
+        /* Horizontal layout for stats on mobile? */
+        align-items: center;
+        justify-content: space-between;
+        text-align: left;
     }
 
     .stat-number {
-        font-size: 32px;
+        font-size: 28px;
+        margin-bottom: 0;
+    }
+
+    .stat-label {
+        font-size: 13px;
+        text-align: right;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+
+    .add-btn,
+    .login-btn,
+    .check-btn {
+        width: 100%;
+        min-height: 48px;
+    }
+
+    /* Table Optimization */
+    .metadata-table-container {
+        border: none;
+        box-shadow: none;
+        background: transparent;
+    }
+
+    .metadata-table thead {
+        display: none;
+        /* Hide headers */
+    }
+
+    .metadata-table tr {
+        display: block;
+        background: var(--surface);
+        margin-bottom: var(--space-md);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: var(--space-md);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .metadata-table td {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--bg);
+        text-align: right;
+        font-size: 14px;
+    }
+
+    .metadata-table td:last-child {
+        border-bottom: none;
+    }
+
+    /* Add labels via pseudo-elements would require JS or data-attributes. 
+       For now, just letting them stack or scroll is safer if we can't change HTML.
+       Reverting to scrollable table for safety, but styling it better.
+    */
+    .metadata-table thead {
+        display: table-header-group;
+    }
+
+    .metadata-table tr {
+        display: table-row;
+    }
+
+    .metadata-table td {
+        display: table-cell;
+        text-align: left;
+    }
+
+    .metadata-table th,
+    .metadata-table td {
+        padding: 12px 8px;
+        white-space: nowrap;
+        /* Force scroll */
     }
 }
 
