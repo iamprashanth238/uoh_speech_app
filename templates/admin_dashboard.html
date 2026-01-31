@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - UOH Speech Data Collection</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/admin.css">
+</head>
+
+<body>
+  <div class="dashboard">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">ADMIN DASHBOARD</h1>
+      <a href="/admin/logout" class="logout-btn">LOGOUT</a>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">{{ audio_count }}</div>
+        <div class="stat-label">Audio Files</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ transcription_count }}</div>
+        <div class="stat-label">Transcription Files</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ prompt_stats.get('used', 0) }}</div>
+        <div class="stat-label">Used Prompts (Std)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ prompt_stats.get('unused', 0) }}</div>
+        <div class="stat-label">Available Prompts (Std)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ tribal_prompt_stats.get('used', 0) }}</div>
+        <div class="stat-label">Used Prompts (Tribal)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ tribal_prompt_stats.get('unused', 0) }}</div>
+        <div class="stat-label">Available Prompts (Tribal)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ prompt_stats.get('in_progress', 0) }}</div>
+        <div class="stat-label">In Progress</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ metadata_count }}</div>
+        <div class="stat-label">User Records</div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="add-prompt-section">
+        <h2 class="section-title">ADD NEW PROMPT</h2>
+
+        <form id="addPromptForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="language">Language Code</label>
+              <input type="text" id="language" name="language" value="te" required>
+            </div>
+            <div class="form-group">
+              <label for="dbType">Target Database</label>
+              <select id="dbType" name="db_type"
+                style="width:100%; padding:12px; border:1px solid var(--border); font-family:var(--font-body);">
+                <option value="standard">Standard (General)</option>
+                <option value="tribal">Tribal (Special)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="text">Prompt Text</label>
+            <textarea id="text" name="text" placeholder="Enter the Telugu prompt text..." required></textarea>
+          </div>
+
+          <button type="submit" class="add-btn">ADD PROMPT</button>
+        </form>
+
+        <div id="message"></div>
+      </div>
+
+      <div class="add-prompt-section">
+        <h2 class="section-title">BULK UPLOAD PROMPTS</h2>
+        <p style="color:var(--muted); font-size:14px; margin-bottom:20px;">
+          Upload a CSV or Excel file containing prompts. The first column should contain the prompt text.
+        </p>
+
+        <form id="bulkUploadForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="bulkLanguage">Language Code</label>
+              <input type="text" id="bulkLanguage" name="language" value="te" required>
+            </div>
+            <div class="form-group">
+              <label for="bulkDbType">Target Database</label>
+              <select id="bulkDbType" name="db_type"
+                style="width:100%; padding:12px; border:1px solid var(--border); font-family:var(--font-body);">
+                <option value="standard">Standard (General)</option>
+                <option value="tribal">Tribal (Special)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label for="csvFile">CSV/Excel File</label>
+            <input type="file" id="csvFile" name="file" accept=".csv, .xlsx" required style="padding: 10px;">
+          </div>
+
+          <button type="submit" class="add-btn" style="margin-top:0;">UPLOAD FILE</button>
+        </form>
+
+        <div id="bulkMessage"></div>
+      </div>
+
+      <div class="sync-check-section" style="margin-bottom: 30px;">
+        <h2 class="section-title">CLOUD SYNC STATUS</h2>
+        <p style="color:var(--muted); font-size:14px; margin-bottom:20px;">
+          Compare local file counts with AWS S3 storage to ensure data integrity.
+        </p>
+
+        <button id="checkSyncBtn" class="add-btn" style="background-color: #2c3e50;">CHECK S3 SYNC</button>
+
+        <div id="syncResults" style="margin-top: 20px; display: none;">
+          <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <thead>
+              <tr style="background: var(--bg-secondary); text-align: left;">
+                <th style="padding: 10px; border-bottom: 2px solid var(--border);">Category</th>
+                <th style="padding: 10px; border-bottom: 2px solid var(--border);">Local Files</th>
+                <th style="padding: 10px; border-bottom: 2px solid var(--border);">S3 Cloud Files</th>
+                <th style="padding: 10px; border-bottom: 2px solid var(--border);">Status</th>
+              </tr>
+            </thead>
+            <tbody id="syncTableBody">
+              <!-- Results will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+
+      <div class="metadata-link-section">
+        <h2 class="section-title">USER METADATA</h2>
+        <p>View detailed user information collected during speech data collection.</p>
+        <a href="/admin/metadata" class="view-metadata-btn">VIEW METADATA</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('addPromptForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+      const messageDiv = document.getElementById('message');
+
+      try {
+        const response = await fetch('/admin/add_prompt', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          messageDiv.className = 'message success';
+          messageDiv.textContent = result.message;
+          e.target.reset();
+          // Refresh page after 2 seconds to show updated stats
+          setTimeout(() => window.location.reload(), 2000);
+        } else {
+          messageDiv.className = 'message error';
+          messageDiv.textContent = result.error;
+        }
+      } catch (error) {
+        messageDiv.className = 'message error';
+        messageDiv.textContent = 'An error occurred. Please try again.';
+      }
+    });
+
+    document.getElementById('bulkUploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+      const messageDiv = document.getElementById('bulkMessage');
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'UPLOADING...';
+
+      try {
+        const response = await fetch('/admin/upload_prompts', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          messageDiv.className = 'message success';
+          messageDiv.textContent = result.message;
+          e.target.reset();
+          // Refresh page after 2 seconds to show updated stats
+          setTimeout(() => window.location.reload(), 2000);
+        } else {
+          messageDiv.className = 'message error';
+          messageDiv.textContent = result.error;
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'UPLOAD CSV';
+        }
+      } catch (error) {
+        messageDiv.className = 'message error';
+        messageDiv.textContent = 'An error occurred. Please try again.';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'UPLOAD CSV';
+      }
+    });
+
+    document.getElementById('checkSyncBtn').addEventListener('click', async (e) => {
+      const btn = e.target;
+      const resultsDiv = document.getElementById('syncResults');
+      const tbody = document.getElementById('syncTableBody');
+
+      btn.disabled = true;
+      btn.textContent = 'CHECKING CLOUD...';
+      resultsDiv.style.display = 'none';
+      tbody.innerHTML = '';
+
+      try {
+        const response = await fetch('/admin/s3_status');
+        const data = await response.json();
+
+        if (data.error) {
+          alert('Error: ' + data.error);
+          return;
+        }
+
+        for (const [category, stats] of Object.entries(data)) {
+          const row = document.createElement('tr');
+          const isSynced = stats.local === stats.s3;
+          const statusColor = isSynced ? '#27ae60' : '#e74c3c';
+          const statusText = isSynced ? 'Synced' : 'Mismatch';
+
+          row.innerHTML = `
+            <td style="padding: 10px; border-bottom: 1px solid var(--border);">${category}</td>
+            <td style="padding: 10px; border-bottom: 1px solid var(--border);">${stats.local}</td>
+            <td style="padding: 10px; border-bottom: 1px solid var(--border);">${stats.s3}</td>
+            <td style="padding: 10px; border-bottom: 1px solid var(--border); color: ${statusColor}; font-weight: bold;">${statusText}</td>
+          `;
+          tbody.appendChild(row);
+        }
+
+        resultsDiv.style.display = 'block';
+
+      } catch (error) {
+        alert('Failed to fetch sync status');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'CHECK S3 SYNC';
+      }
+    });
+
+
+  </script>
+</body>
+
+</html>

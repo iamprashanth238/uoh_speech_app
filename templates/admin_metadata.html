@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Metadata - UOH Speech Data Collection</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/admin.css">
+</head>
+</head>
+
+<body>
+  <div class="metadata-page">
+    <div class="page-header">
+      <h1 class="page-title">USER METADATA</h1>
+      <div class="header-actions">
+        <a href="/admin/metadata/download" class="download-btn">DOWNLOAD CSV</a>
+        <a href="/admin/dashboard" class="back-btn">← BACK TO DASHBOARD</a>
+      </div>
+    </div>
+
+    <div class="storage-notice">
+      <h3>Data Storage Information</h3>
+      <p>All audio files, transcriptions, and metadata are now stored in a Hugging Face repository for better
+        accessibility and collaboration.</p>
+      {% if hf_repo_url %}
+      <p><strong>Repository:</strong> <a href="{{ hf_repo_url }}" target="_blank">{{ hf_repo_url }}</a></p>
+      {% endif %}
+      <p><strong>Total Metadata Records:</strong> {{ metadata_count }}</p>
+    </div>
+
+    <div class="metadata-actions">
+      <div class="action-card">
+        <h3>📊 Download Metadata</h3>
+        <p>Get a complete CSV export of all user metadata for research and analysis.</p>
+        <a href="/admin/metadata/download" class="action-btn">DOWNLOAD CSV</a>
+      </div>
+      <div class="action-card">
+        <h3>🔗 View Repository</h3>
+        <p>Access the Hugging Face repository where all data is stored.</p>
+        {% if hf_repo_url %}
+        <a href="{{ hf_repo_url }}" target="_blank" class="action-btn">OPEN REPOSITORY</a>
+        {% else %}
+        <p class="note">Repository URL not configured</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

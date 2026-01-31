@@ -1,0 +1,37 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
+
+# Project specific
+uploads/
+temp/
+prompts.db
+telugu_tribe.db
+*.db
+debug_*.py
+debug_*.txt
+
+# Sensitive Data
+*_accessKeys.csv
+*.csv
+*.xlsx

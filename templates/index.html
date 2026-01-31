@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="te">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#fdfaf5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>University of Hyderabad – Academic Research Portal</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+  <!-- HEADER / NAVIGATION -->
+  <header class="header">
+    <div class="header-box">
+      <a href="/">
+        <img src="/static/images/uoh-logo-horizontal.png" alt="University of Hyderabad Logo" class="logo">
+      </a>
+      <div class="title-section">
+        <div class="uoh-thin">University of Hyderabad</div>
+        <div class="uoh-thin small">Academic Research Portal</div>
+        <div class="uoh-thick">Data Collection Tool</div>
+      </div>
+      <a href="/">
+        <img src="/static/images/scis-logo.png" alt="University of Hyderabad Logo" class="logo">
+      </a>
+    </div>
+
+  </header>
+
+  <!-- WELCOME SECTION -->
+  <section id="welcomeSection" class="welcome-section fade-in">
+    <div class="welcome-content">
+      <h1 class="welcome-title">మాతృభాష సంరక్షణ కోసం<br>మీ గొంతును వినిపించండి</h1>
+      <p class="welcome-subtitle">యూనివర్సిటీ ఆఫ్ హైదరాబాద్ వారి పరిశోధనలో పాల్గొనండి</p>
+      <button id="startBtn" class="primary-btn">మొదలుపెట్టండి (START)</button>
+    </div>
+  </section>
+
+  <!-- USER INFO SECTION -->
+  <section id="userInfoSection" class="user-info-section fade-in" style="display:none;">
+    <h2>User Information</h2>
+    <form id="userInfoForm" class="user-form">
+      <div class="form-group">
+        <label for="age">Age:</label>
+        <input type="number" id="age" name="age" required min="1" max="120">
+      </div>
+      <div class="form-group">
+        <label for="gender">Gender:</label>
+        <select id="gender" name="gender" required>
+          <option value="">Select</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="location">Location:</label>
+        <input type="text" id="location" name="location" required>
+      </div>
+      <div class="form-group">
+        <label for="state">State:</label>
+        <select id="state" name="state" required>
+          <option value="">Select</option>
+          <option value="Telangana">Telangana</option>
+          <option value="Andhra Pradesh">Andhra Pradesh</option>
+          <option value="TS-Tribal">TS-Tribal</option>
+          <option value="AP-Tribal">AP-Tribal</option>
+        </select>
+      </div>
+      <button type="submit" class="submit-btn">Proceed to Recording</button>
+    </form>
+  </section>
+
+  <!-- MAIN CONTENT -->
+  <main id="mainSection" style="display:none;">
+    <div class="status">CONTRIBUTION 1 OF 5</div>
+
+    <div class="prompt">
+      పరిశ్రమలు అభివృద్ధిలో ఉపాధి అవకాశాలు పెరుగుతున్నాయి.
+    </div>
+
+    <div class="controls">
+      <button id="recordBtn">RECORD</button>
+
+      <button id="retakeBtn" style="display:none;">RE-TAKE</button>
+      <button id="saveBtn" style="display:none;">SAVE</button>
+    </div>
+
+    <div class="progress">
+      <span class="active"></span>
+      <span></span><span></span><span></span><span></span>
+    </div>
+  </main>
+
+  <!-- COMPLETION SCREEN -->
+  <section id="completionScreen" style="display:none; text-align:center; padding:80px 24px;">
+    <h2 style="font-size:42px; letter-spacing:0.08em;">ధన్యవాదాలు</h2>
+
+    <p class="status" style="margin-top:24px;">
+      YOUR CONTRIBUTION IS COMPLETE.<br>
+      RECORDINGS ARE NOW IMMUTABLE AND INDEXED<br>
+      IN THE RESEARCH DATASET.
+    </p>
+
+    <div class="controls" style="margin-top:40px;">
+      <button id="newSessionBtn">START NEW SESSION</button>
+    </div>
+
+    <div class="prompt" style="margin-top:40px; font-size:14px;">
+      DATA VERIFIED & STORED ON HUGGING FACE
+    </div>
+  </section>
+
+
+  <!-- FOOTER -->
+  <footer>
+    Data collected for academic research under <a href="https://drnagamani.in/" target="_blank">Dr.M.Nagamani</a>,
+    Assistant Professor, University of Hyderabad<br>
+    Developed by <a href="https://www.linkedin.com/in/kattoju-prashanth-999908229/" target="_blank">Prashanth
+      Kattoju</a>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+
+</html>
