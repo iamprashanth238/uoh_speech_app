@@ -22,6 +22,24 @@
     max-width: 1200px;
 }
 
+/* ===== Dashboard Header ===== */
+.dashboard-header,
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-md);
+    border-bottom: 2px solid var(--bg);
+}
+
+.dashboard-title,
+.page-title {
+    margin: 0;
+    font-size: 28px;
+    letter-spacing: 0.1em;
+}
+
 /* ===== Stats Grid ===== */
 .stats-grid {
     display: grid;

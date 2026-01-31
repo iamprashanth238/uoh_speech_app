@@ -18,7 +18,9 @@ class S3Manager:
             self.s3_client.upload_file(file_path, self.bucket_name, s3_key)
             return True
         except Exception as e:
-            print(f"Error uploading file {file_path} to {s3_key}: {e}")
+            print(f"❌ S3 Error uploading file {file_path} to {s3_key}: {e}")
+            import traceback
+            traceback.print_exc()
             return False
 
     def upload_fileobj(self, file_obj, s3_key):
@@ -84,6 +86,9 @@ class S3Manager:
                     count += len(page['Contents'])
             return count
         except Exception as e:
+            print(f"❌ S3 Error counting files with prefix '{prefix}': {e}")
+            import traceback
+            traceback.print_exc()
             return 0
 
     def read_file(self, s3_key):
@@ -92,7 +97,7 @@ class S3Manager:
             response = self.s3_client.get_object(Bucket=self.bucket_name, Key=s3_key)
             return response['Body'].read().decode('utf-8')
         except Exception as e:
-            print(f"Error reading file {s3_key}: {e}")
+            print(f"❌ S3 Error reading file {s3_key}: {e}")
             return None
 
     def move_file(self, source_key, dest_key):

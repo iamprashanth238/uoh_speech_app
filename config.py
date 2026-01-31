@@ -21,8 +21,8 @@ class Config:
     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
     S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
     
-    # Sanitize S3_REGION (e.g., convert "Europe (Stockholm) eu-north-1" to "eu-north-1")
-    _raw_region = os.getenv('AWS_REGION', os.getenv('S3_REGION', 'eu-north-1'))
+    # Prioritize S3_REGION to avoid collision with Vercel's default AWS_REGION (e.g., iad1)
+    _raw_region = os.getenv('S3_REGION', os.getenv('AWS_REGION', 'eu-north-1'))
     if _raw_region and ' ' in _raw_region:
         # Extract the last part which is usually the region code like 'eu-north-1'
         S3_REGION = _raw_region.split()[-1].strip()

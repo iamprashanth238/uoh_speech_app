@@ -63,10 +63,15 @@ def admin_dashboard():
             'unused': unused_tribal
         }
         
-        # 5. Metadata / User Records (Now from Database for reliability)
+        # 5. Metadata / User Records (Now from Database for reliability, but fallback to S3 for Vercel)
         metadata_count = get_total_recordings_count()
+        if metadata_count == 0:
+             # Fallback: Count files in the dedicated metadata folder in S3
+             metadata_count = s3.count_files(Config.S3_METADATA_PREFIX)
+             # Note: CSV exports might exist in this folder too, so this is an estimate
+             # but better than showing 0 when data exists.
         
-        print(f"DEBUG DASHBOARD: Audio={audio_count}, Trans={transcription_count}, StdPrompts={prompt_stats}, Tribal={tribal_prompt_stats}")
+        print(f"DEBUG DASHBOARD: Audio={audio_count}, Trans={transcription_count}, StdPrompts={prompt_stats}, Tribal={tribal_prompt_stats}, Metadata={metadata_count}")
         
     except Exception as e:
         print(f"Error fetching S3 stats in dashboard: {e}")
