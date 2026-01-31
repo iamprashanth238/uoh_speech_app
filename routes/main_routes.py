@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, session
 import os, uuid, json
 from config import Config
-from config import Config
+
 from database import reset_old_in_progress_prompts, add_recording_metadata
 from utils.s3_utils import S3Manager
 
@@ -53,12 +53,9 @@ def submit():
         uploads_audio_dir = Config.UPLOAD_AUDIO_DIR
         uploads_transcription_dir = Config.UPLOAD_TRANSCRIPTION_DIR
     
-    # Always ensure standard dirs exist for metadata duplication
-    standard_transcription_dir = Config.UPLOAD_TRANSCRIPTION_DIR
-    
     os.makedirs(uploads_audio_dir, exist_ok=True)
     os.makedirs(uploads_transcription_dir, exist_ok=True)
-    os.makedirs(standard_transcription_dir, exist_ok=True)
+
 
     try:
         # Save audio locally
@@ -70,10 +67,6 @@ def submit():
         with open(text_path, "w", encoding="utf-8") as f:
             f.write(text)
 
-        if user_info:
-            # Primary metadata save removed from local transcription folder to avoid redundancy.
-            # Metadata is now stored directly in SQLite and dedicated S3 folder during finalization.
-            pass
 
     except Exception as e:
         return jsonify({"error": f"Upload failed: {str(e)}"}), 500

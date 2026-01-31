@@ -1,15 +1,20 @@
 import os
+import tempfile
 from dotenv import load_dotenv
+
+# Base directory of the project
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 load_dotenv()
 
 class Config:
-    SECRET_KEY = 'your-secret-key-here'  # Change this to a secure random key
+    SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key-here')
     ADMIN_USERNAME = os.getenv('ADMIN_USERNAME')    
     ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
     
-    DB_PATH = "prompts.db"
-    TRIBAL_DB_PATH = "telugu_tribe.db"
+    # Use absolute paths for SQLite databases
+    DB_PATH = os.path.join(BASE_DIR, "prompts.db")
+    TRIBAL_DB_PATH = os.path.join(BASE_DIR, "telugu_tribe.db")
     
     # AWS S3 Configuration
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
@@ -32,12 +37,8 @@ class Config:
     
     S3_METADATA_PREFIX = "metadata/"
     
-    
-    
-    # Upload Directories (Required for main_routes.py)
     # Upload Directories (Required for main_routes.py)
     # Using temp directory to allow writes on Serverless (Vercel) /tmp
-    import tempfile
     BASE_UPLOAD_DIR = os.path.join(tempfile.gettempdir(), 'uoh_speech_uploads')
     
     UPLOAD_AUDIO_DIR = os.path.join(BASE_UPLOAD_DIR, "audio")
@@ -53,10 +54,11 @@ class Config:
     MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
     try:
         MAIL_PORT = int(os.getenv('MAIL_PORT', 587))
-    except ValueError:
+    except (ValueError, TypeError):
         MAIL_PORT = 587
     MAIL_USE_TLS = str(os.getenv('MAIL_USE_TLS', 'true')).lower() in ['true', 'on', '1']
     MAIL_USERNAME = os.getenv('MAIL_USERNAME')
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', 'noreply@uoh-speech.com')
     ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'admin@example.com')
+

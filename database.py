@@ -159,8 +159,8 @@ def bulk_add_prompts(prompts_list, db_type='standard'):
     return added_count, added_prompts
 def create_recordings_table(db_path):
     """Creates the recordings table if it doesn't exist."""
-    conn = get_db_connection(db_path)
     try:
+        conn = get_db_connection(db_path)
         cur = conn.cursor()
         cur.execute("""
         CREATE TABLE IF NOT EXISTS recordings (
@@ -177,10 +177,15 @@ def create_recordings_table(db_path):
         )
         """)
         conn.commit()
-    except Exception as e:
-        print(f"Error creating recordings table in {db_path}: {e}")
-    finally:
         conn.close()
+    except sqlite3.OperationalError as e:
+        if "readonly" in str(e).lower():
+            print(f"⚠️ Database {db_path} is read-only. Skipping table creation.")
+        else:
+            print(f"❌ Operational error creating recordings table in {db_path}: {e}")
+    except Exception as e:
+        print(f"❌ Error creating recordings table in {db_path}: {e}")
+
 
 def add_recording_metadata(uid, user_info, audio_path, prompt_text, is_tribal):
     """
