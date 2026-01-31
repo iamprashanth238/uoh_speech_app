@@ -36,7 +36,7 @@ def admin_login():
 
         if username == admin_user and password == admin_pass:
             session["admin"] = True
-            session.permanent = True # Make session last across browser restarts if configured
+            # session.permanent = False  # Default is False, which expires on browser close
             return redirect(url_for("admin.admin_dashboard"))
         else:
             flash("Invalid credentials")

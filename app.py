@@ -7,6 +7,7 @@ from database import create_recordings_table
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    app.config['SESSION_PERMANENT'] = False
     
     # Initialize extensions here if any
     create_recordings_table(Config.DB_PATH)
