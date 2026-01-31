@@ -229,6 +229,7 @@ async function loadPrompt() {
     retakeBtn.style.display = "none";
     saveBtn.style.display = "none";
     saveBtn.disabled = false;
+    saveBtn.textContent = "SAVE";
 
     // Update progress UI based on server session
     updateProgress(data.completed);
@@ -358,7 +359,7 @@ saveBtn.onclick = async () => {
 
   // Disable button to prevent double submission
   saveBtn.disabled = true;
-  saveBtn.textContent = "SAVE";
+  saveBtn.textContent = "SAVING...";
 
   try {
     const fd = new FormData();
