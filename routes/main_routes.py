@@ -165,6 +165,24 @@ def finalize_session():
                     filename = os.path.basename(prompt_id)
                     dest_key = s3_prompt_used + filename
                     s3.move_file(prompt_id, dest_key)
+                    
+                    # Also move the English transliteration if it exists
+                    try:
+                        if is_tribal:
+                            en_prefix = Config.S3_PROMPTS_TRIBAL_ENGLISH_PREFIX
+                            en_used_prefix = Config.S3_PROMPTS_TRIBAL_ENGLISH_USED
+                        else:
+                            en_prefix = Config.S3_PROMPTS_STANDARD_ENGLISH_PREFIX
+                            en_used_prefix = Config.S3_PROMPTS_STANDARD_ENGLISH_USED
+                            
+                        en_source_key = f"{en_prefix}{filename}"
+                        en_dest_key = f"{en_used_prefix}{filename}"
+                        
+                        # Only move if it actually exists (legacy prompts might not have English)
+                        if s3.check_file_exists(en_source_key):
+                            s3.move_file(en_source_key, en_dest_key)
+                    except Exception as e:
+                        print(f"Warning: Failed to move English transliteration for {filename}: {e}")
 
             # 4. Upload Metadata
             if user_info:
@@ -212,26 +230,62 @@ def api_get_prompt():
     s3 = S3Manager()
     if is_tribal:
         prefix = Config.S3_PROMPTS_TRIBAL_PREFIX
+        en_prefix = Config.S3_PROMPTS_TRIBAL_ENGLISH_PREFIX
     else:
         prefix = Config.S3_PROMPTS_STANDARD_PREFIX
+        en_prefix = Config.S3_PROMPTS_STANDARD_ENGLISH_PREFIX
         
-    s3_key, text = s3.get_random_file_from_prefix(prefix)
-    
-    if s3_key is None or text is None:
-        # No prompts available in S3
-        from utils.email_utils import send_admin_alert
+    # Try to find a prompt where both Telugu and English are NOT used
+    for _ in range(10): # Try 10 times to find a clean pair
+        s3_key, text = s3.get_random_file_from_prefix(prefix)
         
-        prompt_type = "Tribal" if is_tribal else "Standard"
-        subject = f"Urgent: No {prompt_type} Prompts Available"
-        body = f"The user is trying to access {prompt_type} prompts, but the S3 folder '{prefix}' appears to be empty or contains no text files.\n\nPlease upload more prompts via the Admin Dashboard immediately."
+        if s3_key is None or text is None:
+            # No prompts available in S3
+            from utils.email_utils import send_admin_alert
+            
+            prompt_type = "Tribal" if is_tribal else "Standard"
+            subject = f"Urgent: No {prompt_type} Prompts Available"
+            body = f"The user is trying to access {prompt_type} prompts, but the S3 folder '{prefix}' appears to be empty or contains no text files.\n\nPlease upload more prompts via the Admin Dashboard immediately."
+            
+            send_admin_alert(subject, body)
+            
+            # Return generic done, but with error flag so frontend can show "Sorry" message
+            return jsonify({"done": True, "completed": completed, "error": "no_prompts"})
+            
+        # We have a Telugu prompt that is NOT in te_used. 
+        # NOW: Check if the English counterpart is in en_used.
+        filename = os.path.basename(s3_key)
         
-        send_admin_alert(subject, body)
+        if is_tribal:
+            en_used_prefix = Config.S3_PROMPTS_TRIBAL_ENGLISH_USED
+        else:
+            en_used_prefix = Config.S3_PROMPTS_STANDARD_ENGLISH_USED
+            
+        en_used_key = f"{en_used_prefix}{filename}"
         
-        # Return generic done, but with error flag so frontend can show "Sorry" message
-        return jsonify({"done": True, "completed": completed, "error": "no_prompts"})
-        
-    # Return S3 key as ID
-    return jsonify({"id": s3_key, "text": text.strip(), "completed": completed})
+        if s3.check_file_exists(en_used_key):
+            print(f"⚠️ English version of {filename} is already in used folder. Skipping pair...")
+            continue # Try another one
+            
+        # If we reach here, it's truly unused on both sides
+        # Fetch English text from main prefix
+        english_text = ""
+        try:
+            en_key = f"{en_prefix}{filename}"
+            english_text = s3.read_file(en_key) or ""
+        except Exception as e:
+            print(f"Warning: Failed to fetch English transliteration for {s3_key}: {e}")
+
+        # Return S3 key as ID
+        return jsonify({
+            "id": s3_key, 
+            "text": text.strip(), 
+            "english_text": english_text.strip(),
+            "completed": completed
+        })
+
+    # If we exhausted 10 tries, just return the last one found or done
+    return jsonify({"done": True, "completed": completed, "error": "finding_pair"})
 
 
 @main_bp.route("/new_session", methods=["POST"])

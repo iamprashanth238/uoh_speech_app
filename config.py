@@ -39,9 +39,13 @@ class Config:
     # Updated Prompt Prefixes
     S3_PROMPTS_STANDARD_PREFIX = "prompts/standard/"
     S3_PROMPTS_STANDARD_USED = "prompts/standard/used/"
+    S3_PROMPTS_STANDARD_ENGLISH_PREFIX = "prompts/en-transcription-std/"
+    S3_PROMPTS_STANDARD_ENGLISH_USED = "prompts/en-transcription-std/used/"
     
     S3_PROMPTS_TRIBAL_PREFIX = "prompts/tribal/"
     S3_PROMPTS_TRIBAL_USED = "prompts/tribal/used/"
+    S3_PROMPTS_TRIBAL_ENGLISH_PREFIX = "prompts/en-transcription-tribal/"
+    S3_PROMPTS_TRIBAL_ENGLISH_USED = "prompts/en-transcription-tribal/used/"
     
     S3_METADATA_PREFIX = "metadata/"
     
@@ -57,6 +61,8 @@ class Config:
     # Restoring missing configs to prevent system crash (AttributeErrors)
     S3_PROMPTS_STANDARD_INPROGRESS = "prompts/standard/inprogress/"
     S3_PROMPTS_TRIBAL_INPROGRESS = "prompts/tribal/inprogress/"
+    S3_PROMPTS_STANDARD_ENGLISH_INPROGRESS = "prompts/en-transcription-std/inprogress/"
+    S3_PROMPTS_TRIBAL_ENGLISH_INPROGRESS = "prompts/en-transcription-tribal/inprogress/"
 
     # Email Configuration (Required for utils/email_utils.py)
     MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')

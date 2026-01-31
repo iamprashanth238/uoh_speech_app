@@ -148,6 +148,7 @@ def add_prompt():
     
     language = request.form.get("language", "te")
     text = request.form.get("text", "").strip()
+    english_text = request.form.get("english_text", "").strip()
     db_type = request.form.get("db_type", "standard")
     
     if not text:
@@ -160,19 +161,24 @@ def add_prompt():
         
         if db_type == 'tribal':
             prompt_prefix = Config.S3_PROMPTS_TRIBAL_PREFIX
+            en_prompt_prefix = Config.S3_PROMPTS_TRIBAL_ENGLISH_PREFIX
         else:
             prompt_prefix = Config.S3_PROMPTS_STANDARD_PREFIX
+            en_prompt_prefix = Config.S3_PROMPTS_STANDARD_ENGLISH_PREFIX
             
         s3 = S3Manager()
         
-        # Upload individual prompt text file
-        # Filename format: UOH_{uuid}.txt
-        s3_key = f"{prompt_prefix}UOH_{prompt_uid}.txt"
+        # 1. Upload Telugu prompt
+        filename = f"UOH_{prompt_uid}.txt"
+        s3_key = f"{prompt_prefix}{filename}"
+        s3.upload_string(text, s3_key)
         
-        if s3.upload_string(text, s3_key):
-             return jsonify({"success": True, "message": f"Prompt added to S3 ({db_type}) as {s3_key}"})
-        else:
-             return jsonify({"error": "Failed to upload to S3"}), 500
+        # 2. Upload English transliteration (if provided)
+        if english_text:
+            s3_en_key = f"{en_prompt_prefix}{filename}"
+            s3.upload_string(english_text, s3_en_key)
+            
+        return jsonify({"success": True, "message": f"Prompt added to S3 ({db_type}) as {filename}"})
              
     except Exception as e:
         print(f"Error adding prompt: {e}")
@@ -228,9 +234,11 @@ def upload_prompts():
         db_type = request.form.get("db_type", "tribal")
 
         if db_type == 'tribal':
-            S3_PROMPT_PREFIX = "prompts/tribal/"
+            S3_PROMPT_PREFIX = Config.S3_PROMPTS_TRIBAL_PREFIX
+            S3_EN_PROMPT_PREFIX = Config.S3_PROMPTS_TRIBAL_ENGLISH_PREFIX
         else:
-            S3_PROMPT_PREFIX = "prompts/standard/"
+            S3_PROMPT_PREFIX = Config.S3_PROMPTS_STANDARD_PREFIX
+            S3_EN_PROMPT_PREFIX = Config.S3_PROMPTS_STANDARD_ENGLISH_PREFIX
 
         prompts_to_add = []
         txt_files = []
@@ -256,6 +264,7 @@ def upload_prompts():
                 return jsonify({"error": "CSV must contain a 'text' column"}), 400
 
             text_col = field_map["text"]
+            en_text_col = field_map.get("english-text") # From user requirement
             lang_col = field_map.get("language")
             id_col = field_map.get("prompt_id")
 
@@ -263,19 +272,24 @@ def upload_prompts():
                 text = (row.get(text_col) or "").strip()
                 if not text:
                     continue
-
+                
+                en_text = (row.get(en_text_col) if en_text_col else "").strip()
                 language = (row.get(lang_col) if lang_col else None) or default_language
-                prompt_id = row.get(id_col) if id_col else f"row_{idx}"
+                prompt_id = row.get(id_col) if id_col else f"UOH_{uuid.uuid4().hex[:6]}"
 
-                prompts_to_add.append((language, text))
-
-                filename = safe_filename(f"{prompt_id}_{language}.txt")
-                path = os.path.join(temp_dir, filename)
-
-                with open(path, "w", encoding="utf-8") as f:
+                # Save Telugu
+                filename = safe_filename(f"{prompt_id}.txt")
+                te_path = os.path.join(temp_dir, filename)
+                with open(te_path, "w", encoding="utf-8") as f:
                     f.write(text)
+                txt_files.append((te_path, S3_PROMPT_PREFIX))
 
-                txt_files.append(path)
+                # Save English if exists
+                if en_text:
+                    en_path = os.path.join(temp_dir, f"en_{filename}")
+                    with open(en_path, "w", encoding="utf-8") as f:
+                        f.write(en_text)
+                    txt_files.append((en_path, S3_EN_PROMPT_PREFIX, filename)) # Store original filename for S3 key
 
         # ================= XLSX =================
         else:
@@ -286,6 +300,7 @@ def upload_prompts():
                 return jsonify({"error": "Excel file must contain a 'text' column"}), 400
 
             text_col = cols["text"]
+            en_text_col = cols.get("english-text")
             lang_col = cols.get("language")
             id_col = cols.get("prompt_id")
 
@@ -294,18 +309,23 @@ def upload_prompts():
                 if not text or text.lower() == "nan":
                     continue
 
+                en_text = (str(row[en_text_col]).strip() if en_text_col and pd.notna(row[en_text_col]) else "")
                 language = (row[lang_col] if lang_col else None) or default_language
-                prompt_id = row[id_col] if id_col else f"row_{idx+1}"
+                prompt_id = row[id_col] if id_col else f"UOH_{uuid.uuid4().hex[:6]}"
 
-                prompts_to_add.append((language, text))
-
-                filename = safe_filename(f"{prompt_id}_{language}.txt")
-                path = os.path.join(temp_dir, filename)
-
-                with open(path, "w", encoding="utf-8") as f:
+                # Save Telugu
+                filename = safe_filename(f"{prompt_id}.txt")
+                te_path = os.path.join(temp_dir, filename)
+                with open(te_path, "w", encoding="utf-8") as f:
                     f.write(text)
+                txt_files.append((te_path, S3_PROMPT_PREFIX))
 
-                txt_files.append(path)
+                # Save English if exists
+                if en_text:
+                    en_path = os.path.join(temp_dir, f"en_{filename}")
+                    with open(en_path, "w", encoding="utf-8") as f:
+                        f.write(en_text)
+                    txt_files.append((en_path, S3_EN_PROMPT_PREFIX, filename))
 
         # ---------- S3 UPLOAD ONLY ----------
         # Removing DB dependency
@@ -332,20 +352,19 @@ def upload_prompts():
         # Let's stick to the generated filenames or standardize them.
         # If the user provided IDs in CSV, we want to respect them.
         
-        for path in txt_files:
+        for item in txt_files:
             try:
-                filename = os.path.basename(path)
-                # Ensure it has a unique prefix if not present?
-                # For safety, let's prepend UOH_ if not present
-                if not filename.startswith("UOH_") and not filename.startswith("row_"):
-                     filename = f"UOH_{filename}"
-                     
-                s3_key = f"{S3_PROMPT_PREFIX}{filename}"
+                if len(item) == 2: # (local_path, s3_prefix) -> Telugu
+                    path, prefix = item
+                    filename = os.path.basename(path)
+                else: # (local_path, s3_prefix, original_filename) -> English
+                    path, prefix, filename = item
                 
+                s3_key = f"{prefix}{filename}"
                 if s3.upload_file(path, s3_key):
                     success_count += 1
             except Exception as e:
-                print(f"Failed to upload {path}: {e}")
+                print(f"Failed to upload {item[0]}: {e}")
 
         # Clean up
         shutil.rmtree(temp_dir, ignore_errors=True)

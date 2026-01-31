@@ -223,6 +223,18 @@ async function loadPrompt() {
     currentPromptId = data.id;
     promptBox.innerText = data.text;
 
+    // Display English Transliteration
+    const enPromptBox = document.querySelector('.prompt-english-transliteration');
+    if (enPromptBox) {
+      if (data.english_text) {
+        enPromptBox.innerText = data.english_text;
+        enPromptBox.style.display = "block";
+      } else {
+        enPromptBox.innerText = "";
+        enPromptBox.style.display = "none";
+      }
+    }
+
     // Reset controls
     recordBtn.style.display = "inline-block";
     recordBtn.textContent = "RECORD";

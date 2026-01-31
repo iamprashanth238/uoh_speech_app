@@ -296,6 +296,20 @@ main {
   font-weight: 500;
 }
 
+.prompt-english-transliteration {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-xl);
+  font-size: 24px;
+  line-height: 1.6;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-xl);
+  color: var(--fg);
+  font-weight: 500;
+}
+
 /* ===== Controls ===== */
 
 .controls {
@@ -492,7 +506,8 @@ footer a {
     opacity: 0.8;
   }
 
-  .prompt {
+  .prompt,
+  .prompt-english-transliteration {
     font-size: 20px;
     padding: var(--space-lg);
     margin-bottom: var(--space-lg);
@@ -553,7 +568,8 @@ footer a {
   }
 
   /* Prompt Card Optimization */
-  .prompt {
+  .prompt,
+  .prompt-english-transliteration {
     font-size: 18px;
     text-align: left;
     /* Easier reading */
