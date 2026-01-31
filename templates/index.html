@@ -18,16 +18,29 @@
   <!-- HEADER / NAVIGATION -->
   <header class="header">
     <div class="header-box">
-      <a href="/">
+      <!-- Desktop Logos -->
+      <a href="/" class="desktop-logo">
         <img src="{{ url_for('static', filename='images/uoh-logo-horizontal.png') }}" alt="University of Hyderabad Logo"
           class="logo">
       </a>
+
+      <!-- Mobile Left Logo -->
+      <a href="/" class="mobile-logo">
+        <img src="{{ url_for('static', filename='images/logo1.png') }}" alt="UOH Logo" class="logo-small">
+      </a>
+
       <div class="title-section">
         <div class="uoh-thin">University of Hyderabad</div>
         <div class="uoh-thin small">Academic Research Portal</div>
         <div class="uoh-thick">Data Collection Tool</div>
       </div>
-      <a href="/">
+
+      <!-- Mobile Right Logo -->
+      <a href="/" class="mobile-logo">
+        <img src="{{ url_for('static', filename='images/logo2.png') }}" alt="UOH Logo" class="logo-small">
+      </a>
+
+      <a href="/" class="desktop-logo">
         <img src="{{ url_for('static', filename='images/scis-logo.png') }}" alt="University of Hyderabad Logo"
           class="logo">
       </a>

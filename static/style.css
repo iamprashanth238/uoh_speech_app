@@ -143,6 +143,15 @@ p {
   /* Align text to center */
 }
 
+.mobile-logo {
+  display: none;
+}
+
+.logo-small {
+  height: 32px;
+  width: auto;
+}
+
 .uoh-thin {
   font-family: var(--font-body);
   font-weight: 400;
@@ -448,9 +457,22 @@ footer a {
     margin-bottom: var(--space-md);
   }
 
-  /* Hide logo on mobile as per user request to show only title */
-  .logo {
+  /* Toggle logos for mobile */
+  .desktop-logo {
     display: none;
+  }
+
+  .mobile-logo {
+    display: block;
+  }
+
+  .header-box {
+    flex-direction: row;
+    /* Horizontal layout for {logo1, Title, logo2} */
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
   }
 
   .title-section {
