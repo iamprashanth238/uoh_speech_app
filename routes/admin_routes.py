@@ -1,20 +1,42 @@
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash, jsonify, Response
 import os, json, csv, io
 from datetime import datetime
+from functools import wraps
 from config import Config
 from database import add_new_prompt, get_prompt_stats, get_total_recordings_count, get_all_recordings
 from utils.s3_utils import S3Manager
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get("admin"):
+            return redirect(url_for("admin.admin_login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
 @admin_bp.route("/login", methods=["GET", "POST"])
 def admin_login():
+    # If already logged in, go to dashboard
+    if session.get("admin"):
+        return redirect(url_for("admin.admin_dashboard"))
+
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
         
-        if username == Config.ADMIN_USERNAME and password == Config.ADMIN_PASSWORD:
+        # Check if credentials are set in config
+        admin_user = Config.ADMIN_USERNAME
+        admin_pass = Config.ADMIN_PASSWORD
+        
+        if not admin_user or not admin_pass:
+            flash("Admin credentials not configured on server.")
+            return render_template("admin_login.html")
+
+        if username == admin_user and password == admin_pass:
             session["admin"] = True
+            session.permanent = True # Make session last across browser restarts if configured
             return redirect(url_for("admin.admin_dashboard"))
         else:
             flash("Invalid credentials")
@@ -23,9 +45,8 @@ def admin_login():
 
 
 @admin_bp.route("/dashboard")
+@login_required
 def admin_dashboard():
-    if not session.get("admin"):
-        return redirect(url_for("admin.admin_login"))
     
     try:
         s3 = S3Manager()
@@ -92,9 +113,8 @@ def admin_dashboard():
                          metadata_count=metadata_count)
 
 @admin_bp.route("/metadata")
+@login_required
 def admin_metadata():
-    if not session.get("admin"):
-        return redirect(url_for("admin.admin_login"))
     
     # Get recordings from database
     recordings = get_all_recordings()
@@ -105,9 +125,8 @@ def admin_metadata():
                          recordings=recordings)
 
 @admin_bp.route("/metadata/download")
+@login_required
 def download_metadata():
-    if not session.get("admin"):
-        return redirect(url_for("admin.admin_login"))
     
     # Get metadata from database
     metadata_list = get_all_recordings()
@@ -142,9 +161,8 @@ def download_metadata():
     return response
 
 @admin_bp.route("/add_prompt", methods=["POST"])
+@login_required
 def add_prompt():
-    if not session.get("admin"):
-        return jsonify({"error": "Unauthorized"}), 401
     
     language = request.form.get("language", "te")
     text = request.form.get("text", "").strip()
@@ -211,9 +229,8 @@ def extract_and_upload_individual_files(added_prompts, prompt_prefix):
     return success_count
 
 @admin_bp.route("/upload_prompts", methods=["POST"])
+@login_required
 def upload_prompts():
-    if not session.get("admin"):
-        return jsonify({"error": "Unauthorized"}), 401
 
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
@@ -381,9 +398,8 @@ def upload_prompts():
 
 
 @admin_bp.route("/s3_status")
+@login_required
 def s3_status():
-    if not session.get("admin"):
-        return jsonify({"error": "Unauthorized"}), 401
     
     try:
         s3 = S3Manager()
@@ -413,9 +429,8 @@ def s3_status():
         return jsonify({"error": str(e)}), 500
 
 @admin_bp.route("/sync_s3_prompts", methods=["POST"])
+@login_required
 def sync_s3_prompts():
-    if not session.get("admin"):
-        return jsonify({"error": "Unauthorized"}), 401
     
     try:
         s3 = S3Manager()
