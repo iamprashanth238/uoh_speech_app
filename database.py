@@ -157,3 +157,82 @@ def bulk_add_prompts(prompts_list, db_type='standard'):
         conn.close()
         
     return added_count, added_prompts
+def create_recordings_table(db_path):
+    """Creates the recordings table if it doesn't exist."""
+    conn = get_db_connection(db_path)
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS recordings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            uid TEXT UNIQUE NOT NULL,
+            age INTEGER,
+            gender TEXT,
+            location TEXT,
+            state TEXT,
+            prompt_text TEXT,
+            audio_path TEXT,
+            is_tribal INTEGER,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+        conn.commit()
+    except Exception as e:
+        print(f"Error creating recordings table in {db_path}: {e}")
+    finally:
+        conn.close()
+
+def add_recording_metadata(uid, user_info, audio_path, prompt_text, is_tribal):
+    """
+    Saves recording metadata to both databases to ensure consistency.
+    We save to both because the admin dashboard might check either, 
+    and it provides a fallback.
+    """
+    for db_path in [Config.DB_PATH, Config.TRIBAL_DB_PATH]:
+        conn = get_db_connection(db_path)
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO recordings (uid, age, gender, location, state, prompt_text, audio_path, is_tribal)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                uid,
+                user_info.get('age'),
+                user_info.get('gender'),
+                user_info.get('location'),
+                user_info.get('state'),
+                prompt_text,
+                audio_path,
+                1 if is_tribal else 0
+            ))
+            conn.commit()
+        except sqlite3.IntegrityError:
+            # Already exists, skip
+            pass
+        except Exception as e:
+            print(f"Error saving recording metadata to {db_path}: {e}")
+        finally:
+            conn.close()
+
+def get_total_recordings_count():
+    """Returns the total number of recordings across both databases (handles duplicates via UID)."""
+    # Simply count from one DB as we are mirroring them now for simplicity of query
+    # or better, fetch from one and assume they are synced. 
+    # To be safest, we could count unique UIDs if we were merging, 
+    # but mirroring to both is easier for now.
+    conn = get_db_connection(Config.DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM recordings")
+    count = cur.fetchone()[0]
+    conn.close()
+    return count
+
+def get_all_recordings():
+    """Fetches all recordings from the database for the metadata view."""
+    conn = get_db_connection(Config.DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM recordings ORDER BY timestamp DESC")
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]

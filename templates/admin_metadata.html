@@ -32,6 +32,55 @@
       <p><strong>Total Metadata Records:</strong> {{ metadata_count }}</p>
     </div>
 
+    <div class="metadata-table-section" style="margin-top: 40px; overflow-x: auto;">
+      <h2 class="section-title">DETAILED RECORDS</h2>
+      <table
+        style="width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <thead>
+          <tr style="background: var(--bg-secondary); text-align: left;">
+            <th style="padding: 12px; border-bottom: 2px solid var(--border);">UID</th>
+            <th style="padding: 12px; border-bottom: 2px solid var(--border);">Age</th>
+            <th style="padding: 12px; border-bottom: 2px solid var(--border);">Gender</th>
+            <th style="padding: 12px; border-bottom: 2px solid var(--border);">State</th>
+            <th style="padding: 12px; border-bottom: 2px solid var(--border);">Type</th>
+            <th style="padding: 12px; border-bottom: 2px solid var(--border);">Prompt Snippet</th>
+            <th style="padding: 12px; border-bottom: 2px solid var(--border);">Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rec in recordings %}
+          <tr>
+            <td style="padding: 12px; border-bottom: 1px solid var(--border); font-family: monospace;">{{ rec.uid }}
+            </td>
+            <td style="padding: 12px; border-bottom: 1px solid var(--border);">{{ rec.age }}</td>
+            <td style="padding: 12px; border-bottom: 1px solid var(--border);">{{ rec.gender }}</td>
+            <td style="padding: 12px; border-bottom: 1px solid var(--border);">{{ rec.state }}</td>
+            <td style="padding: 12px; border-bottom: 1px solid var(--border);">
+              {% if rec.is_tribal %}
+              <span
+                style="background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">TRIBAL</span>
+              {% else %}
+              <span
+                style="background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">STANDARD</span>
+              {% endif %}
+            </td>
+            <td
+              style="padding: 12px; border-bottom: 1px solid var(--border); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              {{ rec.prompt_text }}</td>
+            <td style="padding: 12px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted);">{{
+              rec.timestamp }}</td>
+          </tr>
+          {% endfor %}
+          {% if not recordings %}
+          <tr>
+            <td colspan="7" style="padding: 30px; text-align: center; color: var(--muted);">No recordings found in
+              database.</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
     <div class="metadata-actions">
       <div class="action-card">
         <h3>📊 Download Metadata</h3>

@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, session, redirect, url_fo
 import os, json, csv, io
 from datetime import datetime
 from config import Config
-from database import add_new_prompt, get_prompt_stats
+from database import add_new_prompt, get_prompt_stats, get_total_recordings_count, get_all_recordings
 from utils.s3_utils import S3Manager
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -63,8 +63,8 @@ def admin_dashboard():
             'unused': unused_tribal
         }
         
-        # 5. Metadata / User Records
-        metadata_count = s3.count_files(Config.S3_METADATA_PREFIX)
+        # 5. Metadata / User Records (Now from Database for reliability)
+        metadata_count = get_total_recordings_count()
         
         print(f"DEBUG DASHBOARD: Audio={audio_count}, Trans={transcription_count}, StdPrompts={prompt_stats}, Tribal={tribal_prompt_stats}")
         
@@ -91,32 +91,21 @@ def admin_metadata():
     if not session.get("admin"):
         return redirect(url_for("admin.admin_login"))
     
-    # Count metadata files from filesystem
-    transcription_dir = Config.UPLOAD_TRANSCRIPTION_DIR
-    metadata_count = 0
-    if os.path.exists(transcription_dir):
-        metadata_count = len([f for f in os.listdir(transcription_dir) if f.endswith('_metadata.json')])
+    # Get recordings from database
+    recordings = get_all_recordings()
+    metadata_count = len(recordings)
     
     return render_template("admin_metadata.html", 
-                         metadata_count=metadata_count)
+                         metadata_count=metadata_count,
+                         recordings=recordings)
 
 @admin_bp.route("/metadata/download")
 def download_metadata():
     if not session.get("admin"):
         return redirect(url_for("admin.admin_login"))
     
-    # Get metadata
-    transcription_dir = Config.UPLOAD_TRANSCRIPTION_DIR
-    metadata_files = [f for f in os.listdir(transcription_dir) if f.endswith("_metadata.json")]
-    metadata_list = []
-    for mf in metadata_files:
-        try:
-            with open(os.path.join(transcription_dir, mf), "r", encoding="utf-8") as f:
-                data = json.load(f)
-                data["uid"] = mf.replace("_metadata.json", "")
-                metadata_list.append(data)
-        except:
-            pass  # Skip corrupted files
+    # Get metadata from database
+    metadata_list = get_all_recordings()
     
     # Create CSV in memory
     output = io.StringIO()

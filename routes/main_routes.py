@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, request, jsonify, session
 import os, uuid, json
 from config import Config
-from database import reset_old_in_progress_prompts
+from config import Config
+from database import reset_old_in_progress_prompts, add_recording_metadata
 from utils.s3_utils import S3Manager
 
 main_bp = Blueprint('main', __name__)
@@ -69,18 +70,10 @@ def submit():
         with open(text_path, "w", encoding="utf-8") as f:
             f.write(text)
 
-        # Save metadata locally
         if user_info:
-            # Primary metadata save (in tribal folder if tribal, or standard if standard)
-            metadata_path = f"{uploads_transcription_dir}/{uid}_metadata.json"
-            with open(metadata_path, "w", encoding="utf-8") as f:
-                json.dump(user_info, f, ensure_ascii=False)
-            
-            # If tribal, also duplicate metadata to standard folder
-            if is_tribal:
-                standard_metadata_path = f"{standard_transcription_dir}/{uid}_metadata.json"
-                with open(standard_metadata_path, "w", encoding="utf-8") as f:
-                    json.dump(user_info, f, ensure_ascii=False)
+            # Primary metadata save removed from local transcription folder to avoid redundancy.
+            # Metadata is now stored directly in SQLite and dedicated S3 folder during finalization.
+            pass
 
     except Exception as e:
         return jsonify({"error": f"Upload failed: {str(e)}"}), 500
@@ -149,18 +142,19 @@ def finalize_session():
 
             # 1. Upload Audio
             s3_audio_key = f"{s3_audio_prefix}{uid}.wav"
-            s3.upload_file(audio_path, s3_audio_key)
+            if not s3.upload_file(audio_path, s3_audio_key):
+                raise Exception(f"Failed to upload audio to {s3_audio_key}")
 
             # 2. Upload Transcription
             s3_text_key = f"{s3_transcription_prefix}{uid}.txt"
-            s3.upload_file(text_path, s3_text_key)
+            if not s3.upload_file(text_path, s3_text_key):
+                raise Exception(f"Failed to upload transcription to {s3_text_key}")
 
-            # 3. Upload Original Prompt Text 
+            # 3. Upload Original Prompt Text (Optional but recommended to check)
             prompt_text_content = None
             if "/" in str(prompt_id) or ".txt" in str(prompt_id):
                  # S3 key
                  prompt_text_content = s3.read_file(prompt_id)
-            # Legacy DB fallback removed as per request
             
             if prompt_text_content:
                 if is_tribal:
@@ -173,31 +167,35 @@ def finalize_session():
                 s3_actual_prompt_key = f"{s3_prompt_prefix}{uid}_prompt.txt"
                 s3.upload_string(prompt_text_content, s3_actual_prompt_key)
                 
-                
                 # Move original prompt from Available(root) to used
-                # prompt_id is the key (e.g., prompts/standard/foo.txt)
                 if "/" in str(prompt_id): 
                     filename = os.path.basename(prompt_id)
                     dest_key = s3_prompt_used + filename
-                    # Ensure we are not trying to move something that's already moved (race condition check)
-                    # For now, just move.
                     s3.move_file(prompt_id, dest_key)
 
             # 4. Upload Metadata
             if user_info:
-                # Save to Transcription folder (keeping existing behavior)
-                s3_metadata_key = f"{s3_transcription_prefix}{uid}_metadata.json"
                 metadata_json = json.dumps(user_info, ensure_ascii=False)
-                s3.upload_string(metadata_json, s3_metadata_key)
                 
                 # Save to Dedicated Metadata folder (for Admin Dashboard)
                 s3_dedicated_meta_key = f"{Config.S3_METADATA_PREFIX}{uid}_metadata.json"
-                s3.upload_string(metadata_json, s3_dedicated_meta_key)
+                if not s3.upload_string(metadata_json, s3_dedicated_meta_key):
+                    print(f"⚠️ Warning: Failed to upload metadata for {uid} to {s3_dedicated_meta_key}, but proceeding as audio/text are saved.")
                 
+            # 5. Save to Local Database for persistence and Admin Dashboard
+            add_recording_metadata(
+                uid=uid,
+                user_info=user_info,
+                audio_path=f"audio/{'tribal' if is_tribal else 'standard'}/{uid}.wav",
+                prompt_text=item.get("prompt_text", ""),
+                is_tribal=is_tribal
+            )
+
             success_count += 1
             
         except Exception as e:
-            print(f"❌ Error uploading {item.get('uid')}: {e}")
+            print(f"❌ Critical error uploading session item {item.get('uid')}: {e}")
+            # We don't increment success_count here
             
     print(f"✅ Batch upload completed. Success: {success_count}/{len(pending_uploads)}")
     

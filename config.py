@@ -5,8 +5,8 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = 'your-secret-key-here'  # Change this to a secure random key
-    ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')    
-    ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
+    ADMIN_USERNAME = os.getenv('ADMIN_USERNAME')    
+    ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
     
     DB_PATH = "prompts.db"
     TRIBAL_DB_PATH = "telugu_tribe.db"
@@ -15,7 +15,7 @@ class Config:
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
     S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
-    S3_REGION = os.getenv('S3_REGION', 'ap-south-1') # Default to a common region or update as needed
+    S3_REGION = os.getenv('AWS_REGION', os.getenv('S3_REGION', 'eu-north-1'))
 
     # S3 Prefixes (Folders)
     S3_AUDIO_PREFIX = "audio/standard/"
