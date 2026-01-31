@@ -358,7 +358,7 @@ saveBtn.onclick = async () => {
 
   // Disable button to prevent double submission
   saveBtn.disabled = true;
-  saveBtn.textContent = "SAVING...";
+  saveBtn.textContent = "SAVE";
 
   try {
     const fd = new FormData();
